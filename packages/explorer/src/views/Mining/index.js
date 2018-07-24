@@ -306,8 +306,29 @@ class TokenMiner extends React.Component {
     this.setState({ progress: data.progress })
   }
 
+  encodeProofSize = proof => {
+    const proofSize = proof.length / 2
+
+    let res = proofSize.toString('16')
+    let len = res.length
+
+    while (len < 64) {
+      res = '0' + res
+      len++
+    }
+
+    return res
+  }
+
   extendedBufArrToHex = proofs => {
-    return '0x' + proofs.map(proof => (proof.length / 2).toString(16) + proof)
+    return (
+      '0x' +
+      proofs
+        .map(proof => {
+          return this.encodeProofSize(proof) + proof
+        })
+        .join('')
+    )
   }
 
   getProof = async ({ address }) => {
@@ -316,18 +337,27 @@ class TokenMiner extends React.Component {
     this.setState({ ready: true, progress: { tree: 0, download: 0 } })
     const { miner } = this
     const { input, contentLength } = this.props
-    await axios
-      .get(apiAddr)
-      .then(res => {
-        this.setState({ addresses: res })
-        this.setState({ progressBar: 1 })
-      })
-      .catch(console.log)
+    // await axios
+    //   .get(apiAddr)
+    //   .then(res => {
+    //     this.setState({ addresses: res })
+    //     this.setState({ progressBar: 1 })
+    //   })
+    //   .catch(console.log)
+
+    const addresses = [
+      '0x41d18a3dd33283f2d6891b9b9ae2feb9426c1f90',
+      '0xfbe71d6200984e9856f331b14f81e0dc15954913',
+      '0x510db80c59cbd7c51ba265f0e4aef550d8f45184',
+      '0xf8cae1a58a837f3894eda16ab5da3065b0067fea',
+    ]
+
+    this.setState({ addresses: addresses })
 
     const proofs = []
     // Loop through addresses and generate proofs
-    for (const addr of this.state.addresses.data) {
-      proofs.push(await miner.getProof(input, addr.substr(2)))
+    for (const addr of addresses) {
+      proofs.push(await miner.getProof(input, addr.substr(2), contentLength))
     }
     let proof
     proof = this.extendedBufArrToHex(proofs)
@@ -350,22 +380,22 @@ class TokenMiner extends React.Component {
   }
 
   multiMerkleMine = async () => {
-    await window.web3.eth.sendTransaction(
-      {
-        from: window.web3.eth.coinbase,
-        to: toAcc,
-        value: 19,
-        gasLimit: 21000,
-        gasPrice: 1 * 1000000,
-      },
-      (err, res) => {
-        if (err === null) {
-          this.setState({ subProofs: true })
-          this.setState({ progressBar: 2.1 })
-          setTimeout(this.doneMining, 10000)
-        }
-      },
-    )
+    // await window.web3.eth.sendTransaction(
+    //   {
+    //     from: window.web3.eth.coinbase,
+    //     to: toAcc,
+    //     value: 19,
+    //     gasLimit: 21000,
+    //     gasPrice: 1 * 1000000,
+    //   },
+    //   (err, res) => {
+    //     if (err === null) {
+    //       this.setState({ subProofs: true })
+    //       this.setState({ progressBar: 2.1 })
+    //       setTimeout(this.doneMining, 10000)
+    //     }
+    //   },
+    // )
     /*
       .then(res => {
         console.log(res)
@@ -374,17 +404,20 @@ class TokenMiner extends React.Component {
         }
       })
       .catch(console.log)
+      */
     this.state.contract.multiGenerate(
       minerContractAddress,
       this.state.addresses,
       this.state.proof,
       {
-      from: window.web3.eth.coinbase,
-      gasPrice: 1 * 1000000
-      }).then((res)=>{
-        this.setState({progressBar: 5})
-      }).catch(console.log)
-      */
+        from: window.web3.eth.coinbase,
+        gasPrice: 1 * 1000000,
+      },
+      (err, txHash) => console.log(txHash),
+    )
+    // ).then((res)=>{
+    //     this.setState({progressBar: 5})
+    //   }).catch(console.log)
   }
 
   doneMining = async () => {
