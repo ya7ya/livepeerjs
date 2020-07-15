@@ -9,6 +9,33 @@ tags:
 
 components:
   schemas:
+    webhook:
+      required:
+        - id
+        - name
+        - userId
+        - timestamp
+        - eventType
+        - url
+      type: object
+      properties:
+        id:
+          pattern: ^webhook/
+          type: string
+          readOnly: true
+        name:
+          type: string
+        userId:
+          type: string
+          readOnly: true
+        timestamp:
+          type: string
+          readOnly: true
+        eventType:
+          type: string
+          enum:
+            - streamStarted
+
     ingress:
       required:
         - id
@@ -108,3 +135,58 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
+
+  /webhook:
+    tags: 
+      - webhook
+    get:
+      description: gets a list of webhooks defined by the user
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/webhook'              
+    post:
+      description: creates a new webhook
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/webhook'
+  
+  /webhook/{id}:
+    tags: 
+      - webhook
+    get:
+      description: gets a specific webhook details
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/webhook'
+    put:
+      description: updates a specific webhook
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/webhook'
+    delete:
+      description: deletes a specific webhook details
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/webhook'
